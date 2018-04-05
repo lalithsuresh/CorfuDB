@@ -125,6 +125,7 @@ public class DataStore implements IDataStore {
                                     StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.SYNC);
                             Files.move(tmpPath, path, StandardCopyOption.REPLACE_EXISTING,
                                     StandardCopyOption.ATOMIC_MOVE);
+                            Utils.syncDirectory(logDir);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

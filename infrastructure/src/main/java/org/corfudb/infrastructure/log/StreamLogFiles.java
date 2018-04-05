@@ -50,6 +50,7 @@ import org.corfudb.format.Types.LogHeader;
 import org.corfudb.format.Types.Metadata;
 import org.corfudb.format.Types.TrimEntry;
 import org.corfudb.infrastructure.ServerContext;
+import org.corfudb.infrastructure.Utils;
 import org.corfudb.protocols.logprotocol.CheckpointEntry;
 import org.corfudb.protocols.wireprotocol.IMetadata;
 import org.corfudb.protocols.wireprotocol.LogData;
@@ -780,9 +781,23 @@ public class StreamLogFiles implements StreamLog, StreamLogWithRankedAddressSpac
                             EnumSet.of(StandardOpenOption.READ));
                 }
             } else {
-                return FileChannel.open(FileSystems.getDefault().getPath(filePath),
+                boolean newFile = false;
+                
+                File segFile = new File(filePath);
+                if (!segFile.exists()) {
+                    newFile = true;
+                }
+
+                FileChannel channel =  FileChannel.open(FileSystems.getDefault().getPath(filePath),
                         EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE,
                                 StandardOpenOption.CREATE, StandardOpenOption.SPARSE));
+
+                if (newFile) {
+                    // Since the file was just created, the parent directory has to be synced
+                    Utils.syncDirectory(segFile.getParent());
+                }
+
+                return channel;
             }
         } catch (IOException e) {
             log.error("Error opening file {}", filePath, e);
